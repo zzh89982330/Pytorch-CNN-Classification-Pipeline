@@ -1,15 +1,11 @@
-import DataReaders
-import ModelGetter
 import random
 import cv2
 import numpy as np
-import train_test_spliter
 import pandas as pd
-import model
-from Learner import Learner
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 from torch.nn import Module
+from torchvision.transforms import Normalize, Compose, ToPILImage, ToTensor
 
 #############################################
 ##1.image transformers:
@@ -24,6 +20,8 @@ def transform(img):
     img = cv2.resize(img, (331, 331))
     b, g, r = cv2.split(img)
     img = cv2.merge([r, g, b])
+    img = Compose([ToTensor(), Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])(img)
+    img = img.numpy()
     img = img / 255.
 
     # Random flip
@@ -44,43 +42,47 @@ def transform(img):
 
     # clip values to 0-1 range
     img = np.clip(img, 0, 1.0)
-
-    #unsqueeze:
-    img = img.unsqueeze(0)
-
     return img
+
 def test_trans(img):
     img = cv2.resize(img, (331, 331))
     b, g, r = cv2.split(img)
     img = cv2.merge([r, g, b])
+    img = Compose([ToTensor(), Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])(img)
+    img = img.numpy()
     img = img / 255.
 
     #unsqueeze:
-    img = img.unsqueeze(0)
+    #img = np.expand_dims(img, 0)
 
     return img
+
 
 #############################################
 ##1. create the dataloader using DataReaders:
 ##optional: split the csv to train and test
 #############################################
-train_test_spliter.split_train_test("/kaggle/input/train_labels.csv", 0.1, 123, "/kaggle/input/train.csv", "/kaggle/input/test.csv")
-train_df = pd.read_csv("/kaggle/input/train.csv")
-test_df = pd.read_csv("/kaggle/input/test.csv")
-train_loader = DataReaders.getDataLoaderFromCSV(train_df, "/kaggle/input/train", ".tif", transform, 8, True, 8)
-test_loader = DataReaders.getDataLoaderFromCSV(test_df, "kaggle/input/train", ".tif", test_trans, 8, True, 8)
+train_df, test_df = split_train_test("/kaggle/input/train_labels.csv", 0.1, 123, None, None)
+train_loader = getDataLoaderFromCSV(train_df, "/kaggle/input/train", ".tif", transform, 64, True, 0)
+test_loader = getDataLoaderFromCSV(test_df, "kaggle/input/train", ".tif", test_trans, 64, True, 0)
 
 
 #############################################
 ##2. create the model and loss and optimizer:
 #############################################
-model = model.PNASNet5Large()
-model = ModelGetter.getCUDAModel(model) #type:Module
-
+model = pnasnet5large()
+model = getCUDAModel(model) #type:Module
 loss = CrossEntropyLoss()
+optimizer = Adam(model.parameters(), lr=5e-4)
 
-optimizer = Adam(model.parameters(), lr=0.0001)
-
+#####################################
+##2.1 lr_finder (fast.ai resembling)
+## comment these lines if not used
+#####################################
+optimizer = Adam(model.parameters(), lr=1e-7, weight_decay=1e-2)
+lr_finder = LRFinder(model, optimizer, loss, device="cuda")
+lr_finder.range_test(train_loader, end_lr=100, num_iter=100)
+lr_finder.plot()
 
 ###########################################
 ##epoch after function:
@@ -92,5 +94,5 @@ def epoch_after_fn(learner:Learner, epoch):
 #####################
 #learner
 #####################
-learner = Learner(train_loader = train_loader, model=model, epochs=6, loss_fn=loss, optimizer=optimizer, prt_loss_ite=5, test_loader=test_loader, ite_after_fn=None, epoch_after_fn=epoch_after_fn)
-learner.learn()
+#learner = Learner(train_loader = train_loader, model=model, epochs=6, loss_fn=loss, optimizer=optimizer, prt_loss_ite=5, test_loader=test_loader, ite_after_fn=None, epoch_after_fn=epoch_after_fn)
+#learner.learn()
