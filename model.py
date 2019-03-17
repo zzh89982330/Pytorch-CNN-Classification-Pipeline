@@ -381,19 +381,23 @@ def pnasnet5large(num_classes=2, pretrained=True):
 
         if pretrained == True:
             
-            modules = [nn.AvgPool2d(11, stride=1, padding=0), nn.Dropout(0.5), nn.Linear(4320, num_classes),
-                      Cell(in_channels_left=4320, out_channels_left=864,
-                           in_channels_right=4320, out_channels_right=864),
-                      Cell(in_channels_left=4320, out_channels_left=864,
-                            in_channels_right=4320, out_channels_right=864)]
+            modules = [Cell(in_channels_left=2160, out_channels_left=864,
+                           in_channels_right=4320, out_channels_right=864,
+                           match_prev_layer_dimensions=True),
+                       Cell(in_channels_left=4320, out_channels_left=864,
+                            in_channels_right=4320, out_channels_right=864),
+                       Cell(in_channels_left=4320, out_channels_left=864,
+                            in_channels_right=4320, out_channels_right=864),
+                       nn.AvgPool2d(11, stride=1, padding=0), nn.Dropout(0.5), nn.Linear(4320, num_classes)]
             
-            model.avg_pool = modules[0]
-            model.dropout = modules[1]
-            model.last_linear = modules[2]
-            model.cell_10 = modules[3]
-            model.cell_11 = modules[4]
+            model.cell_9 = modules[0]
+            model.cell_10 = modules[1]
+            model.cell_11 = modules[2]
+            model.avg_pool = modules[3]
+            model.dropout = modules[4]
+            model.last_linear = modules[5]
             
-            for child in list(model.children())[:-5]:
+            for child in list(model.children())[:-1 * len(modules)]:
                 for para in child.parameters():
                     para.requires_grad = False
         
