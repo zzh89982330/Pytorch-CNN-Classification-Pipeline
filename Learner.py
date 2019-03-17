@@ -1,7 +1,6 @@
 from torch.utils.data import DataLoader
 from torch.nn import Module
-import torch.opt
-
+import torch
 
 class Learner:
     def __init__(self, train_loader:DataLoader, model:Module, epochs, loss_fn, optimizer, prt_loss_ite, test_loader, ite_after_fn, epoch_after_fn):
