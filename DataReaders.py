@@ -27,7 +27,6 @@ class CSVDataSet(Dataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        image = np.transpose(image, (1, 2, 0))
         return image, label
 
 
