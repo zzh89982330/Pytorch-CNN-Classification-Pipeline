@@ -102,5 +102,5 @@ def epoch_after_fn(learner:Learner, epoch):
 #####################
 #learner
 #####################
-#learner = Learner(train_loader = train_loader, model=model, epochs=6, loss_fn=loss, optimizer=optimizer, prt_loss_ite=5, test_loader=test_loader, ite_after_fn=None, epoch_after_fn=epoch_after_fn)
+#learner = Learner(train_loader = train_loader, model=model, epochs=6, loss_fn=loss, optimizer=optimizer, prt_loss_ite=5, test_loader=test_loader, ite_after_fn=None, epoch_after_fn=[epoch_after_fn])
 #learner.learn()
