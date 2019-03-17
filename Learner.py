@@ -32,14 +32,14 @@ class Learner:
 
                 if self.ite_after_fn:
                     for func in self.ite_after_fn:
-                        self.ite_after_fn(self, ite_count)
+                        func(self, ite_count)
 
                 if ite_count % self.prt_loss_ite == 0:
                     print("<ite {}[{}/{}]: model loss: {}>".format(ite_count, ite_count, self.ite_per_epoch, loss.cpu().detach().item()))
 
             if self.epoch_after_fn:
                 for func in self.epoch_after_fn:
-                    self.epoch_after_fn(self, epoch)
+                    func(self, epoch)
 
     def evl_model(self, back_to_train = True):
         correct = 0
