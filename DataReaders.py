@@ -21,7 +21,7 @@ class CSVDataSet(Dataset):
 
 
     def __getitem__(self, index):
-        img_name, label = self.loc[index]
+        img_name, label = self.df.loc[index]
         img_path = os.path.join(self.data_dir, img_name + self.impostfix)
         image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
         if self.transform is not None:
