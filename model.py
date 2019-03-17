@@ -14,7 +14,7 @@ pretrained_settings = {
             'input_range': [0, 1],
             'mean': [0.5, 0.5, 0.5],
             'std': [0.5, 0.5, 0.5],
-            'num_classes': 1000
+            'num_classes': 1001
         },
         'imagenet+background': {
             'url': 'http://data.lip6.fr/cadene/pretrainedmodels/pnasnet5large-bf079911.pth',
@@ -288,9 +288,8 @@ class Cell(CellBase):
 
 
 class PNASNet5Large(nn.Module):
-    def __init__(self):
-        num_classes = 2
-
+    def __init__(self, num_classes = 1001):
+        
         super(PNASNet5Large, self).__init__()
         self.num_classes = num_classes
         self.conv_0 = nn.Sequential(OrderedDict([
@@ -368,3 +367,43 @@ class PNASNet5Large(nn.Module):
         x = self.features(input)
         x = self.logits(x)
         return x
+
+    
+def pnasnet5large(num_classes=2, pretrained=True):
+    r"""PNASNet-5 model architecture from the
+    `"Progressive Neural Architecture Search"
+    <https://arxiv.org/abs/1712.00559>`_ paper.
+    """
+    if pretrained:
+        # both 'imagenet'&'imagenet+background' are loaded from same parameters
+        model = PNASNet5Large(num_classes=1001) #type:torch.nn.Module
+        model.load_state_dict(model_zoo.load_url("http://data.lip6.fr/cadene/pretrainedmodels/pnasnet5large-bf079911.pth"))
+
+        if pretrained == True:
+            
+            modules = [nn.AvgPool2d(11, stride=1, padding=0), nn.Dropout(0.5), nn.Linear(4320, num_classes),
+                      Cell(in_channels_left=4320, out_channels_left=864,
+                           in_channels_right=4320, out_channels_right=864),
+                      Cell(in_channels_left=4320, out_channels_left=864,
+                            in_channels_right=4320, out_channels_right=864)]
+            
+            model.avg_pool = modules[0]
+            model.dropout = modules[1]
+            model.last_linear = modules[2]
+            model.cell_10 = modules[3]
+            model.cell_11 = modules[4]
+            
+            for child in list(model.children())[:-5]:
+                for para in child.parameters():
+                    para.requires_grad = False
+        
+        model.input_space = "RGB"
+        model.input_size = [3, 331, 331]
+        model.input_range = [0, 1]
+
+        model.mean = [0.5, 0.5, 0.5]
+        model.std = [0.5, 0.5, 0.5]
+    else:
+        model = PNASNet5Large(num_classes=num_classes)
+    
+    return model
