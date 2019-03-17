@@ -43,6 +43,8 @@ class Learner:
     def evl_model(self, back_to_train = True):
         correct = 0
         total = 0
+        
+        torch.cuda.empty_cache()
 
         for para in self.model.parameters():
             para.requires_grad = False
@@ -55,7 +57,9 @@ class Learner:
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-
+        
+        torch.cuda.empty_cache()
+        
         if back_to_train:
             for para in self.model.parameters():
                 para.requires_grad = True
