@@ -12,8 +12,8 @@ def split_train_test(csv_path, test_size, random_state, out_train_path, out_test
     df_test = pd.DataFrame(data={'id':x_test, 'label':y_test})
 
     if out_test_path is not None and out_train_path is not None:
-        df_train.to_csv(out_train_path)
-        df_test.to_csv(out_test_path)
+        df_train.to_csv(out_train_path, index=None)
+        df_test.to_csv(out_test_path, index=None)
 
     else:
         return df_train, df_test
